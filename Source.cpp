@@ -2,13 +2,14 @@
 #include <vector>
 #include <assert.h>
 #include <algorithm>
+#include <limits.h>
 
 using namespace std;
 
 namespace range
 {
 	template<typename cont, typename FUNC>
-	auto lower_bound(const cont& c, FUNC pred)
+	typename cont::iterator_type upper_bound(const cont& c, FUNC pred)
 	{
 		return upper_bound(c.begin(), c.end(), 0, pred);
 	}
@@ -22,25 +23,37 @@ namespace range
 		public:
 			iter(int _value) : value(_value) {}
 			int operator*() { return value; }
-			iter& operator++() { ++value; return *this; }
-			iter& operator++(int) { iter temp(*this); ++value; return temp; }
+			iter operator++() { ++value; return *this; }
+			iter operator++(int) { iter temp(*this); ++value; return temp; }
 			bool operator!=(iter rhs) { return value != rhs.value; }
 			bool operator<(iter rhs) { return value < rhs.value; }
 			void operator+=(int count) { value += count; }
 			int operator-(iter rhs) { return value - rhs.value; }
 		};
 
-		iter iter_start;
-		iter iter_end;
+	public:
+		using iterator_type = iter;
+		using const_iterator_type = const iter;
+
+	private:
+		iterator_type iter_start;
+		iterator_type iter_end;
 
 	public:
 		iota(int start, int end) : iter_start(start), iter_end(end) {}
-		iter begin() { return iter_start; }
-		iter end() { return iter_end; }
-		const iter begin() const { return iter_start; }
-		const iter end() const { return iter_end; }
+		iterator_type begin() { return iter_start; }
+		iterator_type end() { return iter_end; }
+		const_iterator_type begin() const { return iter_start; }
+		const_iterator_type end() const { return iter_end; }
 	};
 }
+
+
+
+
+
+
+// SRM 169 - 500 pts
 
 vector<int> cabinets;
 int workers;
@@ -79,7 +92,7 @@ public:
 	{
 		cabinets = _cabinets;
 		workers = _workers;
-		return *range::lower_bound(range::iota(0, INT_MAX), comp);
+		return *range::upper_bound(range::iota(0, INT_MAX), comp);
 	}
 };
 
