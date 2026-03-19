@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rebase History</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .toolbar label {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .toolbar select {
+      font-size: 0.9rem;
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      max-width: 1100px;
+      height: 400px;
+    }
+    .summary-section {
+      margin-top: 28px;
+      max-width: 1100px;
+    }
+    .summary-section h2 {
+      font-size: 1rem;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .summary-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .summary-controls label {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .summary-controls input[type="date"] {
+      font-size: 0.9rem;
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+    }
+    .summary-table {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .summary-table th {
+      text-align: left;
+      padding: 10px 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid #eee;
+    }
+    .summary-table td {
+      padding: 10px 20px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .summary-table th.num { text-align: right; }
+    .summary-table tr.row-failures td { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Test Rebase History</h1>
+  <div class="toolbar">
+    <label for="yearSelect">Year:</label>
+    <select id="yearSelect"></select>
+  </div>
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <div class="summary-section">
+    <h2>Range Summary</h2>
+    <div class="summary-controls">
+      <label for="startDate">From:</label>
+      <input type="date" id="startDate">
+      <label for="endDate">To:</label>
+      <input type="date" id="endDate">
+    </div>
+
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th class="num">Count</th>
+          <th class="num">% of Failed Tests</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-failures">
+          <td>Failed Tests</td>
+          <td class="num" id="statFailures">—</td>
+          <td class="num">100%</td>
+        </tr>
+        <tr>
+          <td>Successfully Rebased</td>
+          <td class="num" id="statRebased">—</td>
+          <td class="num" id="pctRebased">—</td>
+        </tr>
+        <tr>
+          <td>Rebase Unavailable</td>
+          <td class="num" id="statUnavailable">—</td>
+          <td class="num" id="pctUnavailable">—</td>
+        </tr>
+        <tr>
+          <td>Failed to Uniquely Identify</td>
+          <td class="num" id="statFailedToIdentify">—</td>
+          <td class="num" id="pctFailedToIdentify">—</td>
+        </tr>
+        <tr id="rowTimedOut">
+          <td>Timed Out</td>
+          <td class="num" id="statTimedOut">—</td>
+          <td class="num" id="pctTimedOut">—</td>
+        </tr>
+        <tr id="rowUnknownError">
+          <td>Unknown Error</td>
+          <td class="num" id="statUnknownError">—</td>
+          <td class="num" id="pctUnknownError">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // ---- DATA: replace this block with Python-generated output ----
+    // Invariant: Rebased + Unavailable + FailedToIdentify + TimedOut + UnknownError = FailedTests
+    const CSV_DATA = [
+      { Date: "2023-01-02", NumberOfFailedTests: 39, NumberOfTestsSuccessfullyRebased: 20, NumberOfTestsWithRebaseUnavailable: 10, NumberOfTestsWithFailedToUniquelyIdentifyChange: 6, NumberOfTestsTimedOut: 2, NumberOfTestsWithUnknownError: 1 },
+      { Date: "2023-04-10", NumberOfFailedTests: 37, NumberOfTestsSuccessfullyRebased: 22, NumberOfTestsWithRebaseUnavailable: 8,  NumberOfTestsWithFailedToUniquelyIdentifyChange: 5, NumberOfTestsTimedOut: 1, NumberOfTestsWithUnknownError: 1 },
+      { Date: "2023-07-03", NumberOfFailedTests: 60, NumberOfTestsSuccessfullyRebased: 35, NumberOfTestsWithRebaseUnavailable: 14, NumberOfTestsWithFailedToUniquelyIdentifyChange: 8, NumberOfTestsTimedOut: 2, NumberOfTestsWithUnknownError: 1 },
+      { Date: "2023-10-02", NumberOfFailedTests: 46, NumberOfTestsSuccessfullyRebased: 27, NumberOfTestsWithRebaseUnavailable: 11, NumberOfTestsWithFailedToUniquelyIdentifyChange: 6, NumberOfTestsTimedOut: 1, NumberOfTestsWithUnknownError: 1 },
+      { Date: "2024-01-08", NumberOfFailedTests: 33, NumberOfTestsSuccessfullyRebased: 20, NumberOfTestsWithRebaseUnavailable: 8,  NumberOfTestsWithFailedToUniquelyIdentifyChange: 4, NumberOfTestsTimedOut: 1, NumberOfTestsWithUnknownError: 0 },
+      { Date: "2024-04-01", NumberOfFailedTests: 46, NumberOfTestsSuccessfullyRebased: 28, NumberOfTestsWithRebaseUnavailable: 12, NumberOfTestsWithFailedToUniquelyIdentifyChange: 5, NumberOfTestsTimedOut: 1, NumberOfTestsWithUnknownError: 0 },
+      { Date: "2024-07-01", NumberOfFailedTests: 33, NumberOfTestsSuccessfullyRebased: 20, NumberOfTestsWithRebaseUnavailable: 8,  NumberOfTestsWithFailedToUniquelyIdentifyChange: 4, NumberOfTestsTimedOut: 1, NumberOfTestsWithUnknownError: 0 },
+      { Date: "2024-10-07", NumberOfFailedTests: 50, NumberOfTestsSuccessfullyRebased: 30, NumberOfTestsWithRebaseUnavailable: 12, NumberOfTestsWithFailedToUniquelyIdentifyChange: 6, NumberOfTestsTimedOut: 2, NumberOfTestsWithUnknownError: 0 },
+    ];
+    // ---- END DATA ----
+
+    const SERIES = [
+      { key: "NumberOfFailedTests",                             label: "Failed",                      color: "#e74c3c" },
+      { key: "NumberOfTestsSuccessfullyRebased",                label: "Successfully Rebased",         color: "#2ecc71" },
+      { key: "NumberOfTestsWithRebaseUnavailable",              label: "Rebase Unavailable",           color: "#f39c12" },
+      { key: "NumberOfTestsWithFailedToUniquelyIdentifyChange", label: "Failed to Uniquely Identify",  color: "#9b59b6" },
+      { key: "NumberOfTestsTimedOut",                           label: "Timed Out",                   color: "#3498db", optional: true },
+      { key: "NumberOfTestsWithUnknownError",                   label: "Unknown Error",                color: "#95a5a6", optional: true },
+    ];
+
+    const ACTIVE_SERIES = SERIES.filter(s =>
+      !s.optional || CSV_DATA.some(r => (r[s.key] || 0) !== 0)
+    );
+
+    // Populate year dropdown (most recent first; default to latest year in data)
+    const years = [...new Set(CSV_DATA.map(r => r.Date.slice(0, 4)))].sort((a, b) => b - a);
+    const select = document.getElementById("yearSelect");
+    years.forEach(y => {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      select.appendChild(opt);
+    });
+
+    function filteredData(year) {
+      return CSV_DATA.filter(r => r.Date.startsWith(year));
+    }
+
+    const chart = new Chart(document.getElementById("chart"), {
+      type: "line",
+      data: {
+        datasets: ACTIVE_SERIES.map(s => ({
+          label: s.label,
+          data: filteredData(years[0]).map(r => ({ x: r.Date, y: r[s.key] })),
+          borderColor: s.color,
+          backgroundColor: s.color + "22",
+          borderWidth: 2,
+          pointRadius: 3,
+          tension: 0.3,
+          fill: false,
+        }))
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: "index",
+          intersect: false,
+        },
+        plugins: {
+          legend: { position: "top" },
+          tooltip: { mode: "index" },
+        },
+        scales: {
+          x: {
+            type: "time",
+            time: { unit: "month", tooltipFormat: "yyyy-MM-dd" },
+            title: { display: true, text: "Date" },
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: "Number of Tests" },
+          }
+        }
+      }
+    });
+
+    select.addEventListener("change", () => {
+      const rows = filteredData(select.value);
+      chart.data.datasets.forEach((ds, i) => {
+        ds.data = rows.map(r => ({ x: r.Date, y: r[ACTIVE_SERIES[i].key] }));
+      });
+      chart.update();
+    });
+
+    // ---- Range summary ----
+    const startInput = document.getElementById("startDate");
+    const endInput   = document.getElementById("endDate");
+
+    // Default range: full extent of the data
+    startInput.value = CSV_DATA[0].Date;
+    endInput.value   = CSV_DATA[CSV_DATA.length - 1].Date;
+
+    function updateSummary() {
+      const start = startInput.value;
+      const end   = endInput.value;
+      const rows  = CSV_DATA.filter(r => r.Date >= start && r.Date <= end);
+
+      const failures        = rows.reduce((s, r) => s + r.NumberOfFailedTests, 0);
+      const rebased         = rows.reduce((s, r) => s + r.NumberOfTestsSuccessfullyRebased, 0);
+      const unavailable     = rows.reduce((s, r) => s + r.NumberOfTestsWithRebaseUnavailable, 0);
+      const failedToId      = rows.reduce((s, r) => s + r.NumberOfTestsWithFailedToUniquelyIdentifyChange, 0);
+      const timedOut        = rows.reduce((s, r) => s + r.NumberOfTestsTimedOut, 0);
+      const unknownError    = rows.reduce((s, r) => s + r.NumberOfTestsWithUnknownError, 0);
+
+      const pct = n => failures === 0 ? "N/A" : (n / failures * 100).toFixed(1) + "%";
+
+      const showTimedOut     = timedOut > 0;
+      const showUnknownError = unknownError > 0;
+
+      // Counts
+      document.getElementById("statFailures").textContent       = failures;
+      document.getElementById("statRebased").textContent        = rebased;
+      document.getElementById("statUnavailable").textContent    = unavailable;
+      document.getElementById("statFailedToIdentify").textContent = failedToId;
+      document.getElementById("statTimedOut").textContent       = timedOut;
+      document.getElementById("statUnknownError").textContent   = unknownError;
+
+      document.getElementById("pctRebased").textContent          = pct(rebased);
+      document.getElementById("pctUnavailable").textContent      = pct(unavailable);
+      document.getElementById("pctFailedToIdentify").textContent = pct(failedToId);
+      document.getElementById("pctTimedOut").textContent         = pct(timedOut);
+      document.getElementById("pctUnknownError").textContent     = pct(unknownError);
+
+      document.getElementById("rowTimedOut").style.display    = showTimedOut     ? "" : "none";
+      document.getElementById("rowUnknownError").style.display = showUnknownError ? "" : "none";
+    }
+
+    updateSummary();
+    startInput.addEventListener("change", updateSummary);
+    endInput.addEventListener("change", updateSummary);
+
+    setTimeout(() => {
+      const h = document.body.scrollHeight;
+      console.log("[history iframe] sending height:", h);
+      window.parent.postMessage({ iframeHeight: h }, "*");
+    }, 500);
+  </script>
+</body>
+</html>
