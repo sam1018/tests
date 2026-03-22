@@ -148,7 +148,7 @@
           <td class="num" id="statUnavailable">—</td>
           <td class="num" id="pctUnavailable">—</td>
         </tr>
-        <tr>
+        <tr id="rowFailedToIdentify">
           <td>Failed to Uniquely Identify</td>
           <td class="num" id="statFailedToIdentify">—</td>
           <td class="num" id="pctFailedToIdentify">—</td>
@@ -184,7 +184,7 @@
     const SERIES = [
       { key: "NumberOfTestsSuccessfullyRebased",                label: "Successfully Rebased",         color: "#2ecc71" },
       { key: "NumberOfTestsWithRebaseUnavailable",              label: "Rebase Unavailable",           color: "#f39c12" },
-      { key: "NumberOfTestsWithFailedToUniquelyIdentifyChange", label: "Failed to Uniquely Identify",  color: "#9b59b6" },
+      { key: "NumberOfTestsWithFailedToUniquelyIdentifyChange", label: "Failed to Uniquely Identify",  color: "#9b59b6", optional: true },
       { key: "NumberOfTestsWithUnknownError",                   label: "Unknown Error",                color: "#95a5a6", optional: true },
     ];
 
@@ -274,7 +274,8 @@
 
       const pct = n => failures === 0 ? "N/A" : (n / failures * 100).toFixed(1) + "%";
 
-      const showUnknownError = unknownError > 0;
+      const showUnknownError    = unknownError > 0;
+      const showFailedToIdentify = failedToId > 0;
 
       // Counts
       document.getElementById("statFailures").textContent       = failures;
@@ -288,7 +289,8 @@
       document.getElementById("pctFailedToIdentify").textContent = pct(failedToId);
       document.getElementById("pctUnknownError").textContent     = pct(unknownError);
 
-      document.getElementById("rowUnknownError").style.display = showUnknownError ? "" : "none";
+      document.getElementById("rowFailedToIdentify").style.display = showFailedToIdentify ? "" : "none";
+      document.getElementById("rowUnknownError").style.display    = showUnknownError    ? "" : "none";
     }
 
     updateSummary();
