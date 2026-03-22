@@ -296,12 +296,6 @@
     updateSummary();
     startInput.addEventListener("change", updateSummary);
     endInput.addEventListener("change", updateSummary);
-
-    setTimeout(() => {
-      const h = document.body.scrollHeight;
-      console.log("[history iframe] sending height:", h);
-      window.parent.postMessage({ iframeHeight: h }, "*");
-    }, 500);
   </script>
 </body>
 </html>
