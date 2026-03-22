@@ -22,7 +22,12 @@
     h1 {
       font-size: 1.4rem;
       color: #333;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #666;
+      margin: 0 0 16px 0;
     }
     .toolbar {
       display: flex;
@@ -102,30 +107,11 @@
     .summary-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
     .summary-table th.num { text-align: right; }
     .summary-table tr.row-failures td { font-weight: 600; border-top: 2px solid #ddd; border-bottom: none; }
-    .notes {
-      max-width: 1100px;
-      margin-bottom: 20px;
-      padding: 10px 16px;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      color: #666;
-      line-height: 1.6;
-    }
-    .notes strong { color: #444; }
   </style>
 </head>
 <body>
   <h1>Test Rebase History</h1>
-  <div class="notes">
-    <strong>Note:</strong> Counts here may differ from the main failures table for three reasons:
-    <ul style="margin: 6px 0 0 0; padding-left: 20px;">
-      <li><strong>Today only:</strong> We track only <em>new</em> test failures introduced each day here. The main table includes all currently open failures.</li>
-      <li><strong>No double-counting:</strong> A test that is both "Rebase Unavailable" and "Failed to Uniquely Identify" is counted once here (under whichever category applies), whereas the main table may count it in both categories separately.</li>
-      <li><strong>Timeouts excluded:</strong> Timed out tests are not tracked here as they are flaky.</li>
-    </ul>
-  </div>
+  <p class="subtitle">Tracking <strong>new</strong> test failures introduced each day</p>
   <div class="toolbar">
     <label for="yearSelect">Year:</label>
     <select id="yearSelect"></select>
